@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>GEO MASTER</title>
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css">
+<link rel="stylesheet" type="text/css" href="css/style.css">
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+<link href='http://fonts.googleapis.com/css?family=Squada+One' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Russo+One' rel='stylesheet' type='text/css'>
+<script src="js/utils.js"></script>
+
+
+    
+</head>
+ 
+<body>
+    
+    <!------------    LOGIN    !------------>
+	<div data-role="page" id="inicio">
+	    
+           <h1>GeoMaster</h1>
+           <p id="subt">Guardá y calculá la distancia a tus lugares preferidos</p>
+
+           <a href="#listaLugaresPage" id="empezar">EMPEZAR</a>
+
+           
+
+        
+	</div>
+
+    <div data-role="page" id="listaLugaresPage">
+        
+           <h1>GeoMaster</h1>
+
+           <a href="#" class="botonlista" id="editar">Editar</a>
+
+             <a href="#crearLugar" class="botonlista" id="mas">Agregar lugar</a>
+
+
+           <form id="listaLugares">
+              
+
+              <div id="lista" class="optionsFormWp"></div>
+
+           
+              
+              <h2 class="formTit">Tipo de distancia</h2>
+            
+              <div class="distanceWp">
+
+                 <p><input class="radioWp" type="radio" name="distancia" value="km" required> KM</p> 
+                 <p><input class="radioWp" type="radio" name="distancia" value="millas" required> Millas</p> 
+              
+              </div>
+
+
+             <input type="submit" id="calc" value="Calcular distancia">
+
+           
+            </form>
+
+            <div id="pos">
+               
+           </div>
+
+           <div id="resultado">
+             
+
+           </div>
+
+
+
+           <div class="popUp">
+               <div class="optionsWp">
+                   <h2>¿Está seguro que desea borrar esta entrada?</h2>
+
+                   <a href="#" id="si">Si</a>
+                   <a href="#" id="no">No</a>
+                </div>
+           </div>
+
+
+        
+    </div>
+
+    <div data-role="page" id="crearLugar">
+        
+           <h1>GeoMaster</h1>
+
+           <a href="#listaLugaresPage" class="back"><</a>
+
+
+
+           <form id="datosLugar" >
+               
+              <p><input type="text" id="nombre" name="nombre" placeholder="Nombre" required></p>
+
+              <p><select id="tipo">
+
+                  <option value="shopping" required>Shopping</option>
+                  <option value="resto" required>Casa de comidas</option>
+                  <option value="hospital" required>Hospital</option>
+                  <option value="policia" required>Comisaría</option>
+               
+               </select></p>
+
+
+               <p><label for="lat">Latitud</label>
+               <input type="text" id="lat" name="lat" placeholder="Latitud" required></p>
+
+               <p><label for="long">Longitud</label>
+               <input type="text" id="long" name="long" placeholder="Longitud" required></p>
+
+               <input type="submit" value="OK!" id="ok">
+
+
+           </form>
+
+          
+        
+    </div>
+
+   
+  <script>
+
+
+    var lugares = Array;
+    var datos = [];
+   
+    var listFlag = false;
+    var flagDelte = false;
+
+    var latitud;
+    var longitud;
+
+
+    $("#mas").click(function(){
+        getPosicion();
+    }) 
+
+    function getPosicion() {
+        navigator.geolocation.getCurrentPosition(onSuccess, onError);
+    }
+
+   
+    function onSuccess(position) {
+
+        latitud = position.coords.latitude;
+        longitud = position.coords.longitude;  
+
+        $("#crearLugar").on("pageshow", function(){
+
+            $("#lat").attr("value", latitud);
+            $("#long").attr("value", longitud);
+
+            console.log("latitud ahora vale" + latitud );
+
+
+        });
+
+    }
+
+   
+    function onError(error) {
+        alert('codigo de error: '    + error.code    + '\n' +
+              'mensaje: ' + error.message + '\n');
+    }
+
+
+    $('#datosLugar').submit(function() {
+
+        var nombre = $("#nombre").val();
+        var tipo = $("#tipo option:selected").text();
+        var latitudForm = $("#lat").val();
+        var longitudForm = $("#long").val();
+
+             lugares  = {
+                'nombre':nombre,
+                'tipo':tipo,
+                'lat':latitudForm,
+                'long':longitudForm
+            };
+
+        
+            datos.push(lugares)
+       
+            
+            lugaresSt = JSON.stringify(datos);
+
+            //chequeo si existen datos para LS en esta posición
+
+            if (localStorage.getItem("lugares") === null) {
+
+                localStorage.setItem("lugares", lugaresSt);
+
+            }else{
+
+                console.log("existen datos");
+
+                 lugaresGuardados = localStorage.getItem("lugares");
+                 lugaresObjeto = JSON.parse(lugaresGuardados); 
+
+                 lugaresObjeto.push(lugares);
+                 lugaresSt = JSON.stringify(lugaresObjeto);
+
+                 localStorage.setItem("lugares", lugaresSt);
+
+
+            }
+
+    });
+
+
+
+        $("#listaLugaresPage").on("pageshow", function(){
+
+           console.log("mostrando lsita");
+
+           if (localStorage.getItem("lugares") === null) {
+              
+                console.log("no existen datos");
+
+                $("#lista").append('<p>No tiene locaciones agradas, comience pulsando en "Agregar lugares"</p>');
+                listFlag = true;
+
+            } else{
+
+            
+              console.log("existen datos");
+             lugaresGuardados = localStorage.getItem("lugares");
+             lugaresObjeto = JSON.parse(lugaresGuardados); 
+
+
+             
+             console.log( datos );
+             console.log(lugaresObjeto);
+           
+
+             largoObjetos = lugaresObjeto.length;
+
+             if(!listFlag){
+
+             } else{
+
+                $("#lista").empty();
+             }
+
+             for(i=0;i<largoObjetos;i++){
+
+ 
+                //genero lista de objetos con atributos customizados que guarden el número de cada indice data-indice
+
+                $("#lista").append('<div class="nombreWp"> <input data-lat="'+lugaresObjeto[i].lat+'" data-long="'+lugaresObjeto[i].long+'" type="radio" name="lugar" value="'+lugaresObjeto[i].nombre+'" required>'+lugaresObjeto[i].nombre+'-' +lugaresObjeto[i].tipo+'<a  class="delete" href="#" data-indice="'+i+'">X</a></div>');
+            
+                listFlag = true;
+             }
+
+
+            }
+
+        });
+
+
+       
+
+            $("#editar").click(function(){
+
+                if(!flagDelte){
+
+                    $(".delete").css("display","block");
+
+                    flagDelte = true;
+
+
+
+                    $(".delete").click(function(){
+
+
+                            var indice = $(this).attr("data-indice");
+                           
+
+
+                        $(".popUp").css("display","block");
+
+
+                        $("#si").click(function(){
+
+                           // genero copia del array y le saco el objeto en el indice del delete clickeado.
+                           //  console.log(indice);
+
+                            copiaLs = localStorage.getItem("lugares");
+                            objCopiaLS = JSON.parse(copiaLs);                   
+
+                            objCopiaLS.splice(indice,1);
+
+                            lugaresStCopia = JSON.stringify(objCopiaLS);
+                            localStorage.setItem("lugares", lugaresStCopia);
+
+                            $("#lista").empty();
+
+                            $(".popUp").css("display","none");
+
+                             lugaresGuardados = localStorage.getItem("lugares");
+                             lugaresObjeto = JSON.parse(lugaresGuardados); 
+                              largoObjetos = lugaresObjeto.length;
+
+                               if(!listFlag){
+
+                               } else{
+
+                                  $("#lista").empty();
+                               }
+
+                               for(i=0;i<largoObjetos;i++){
+
+                                  //genero lista de objetos con atributos customizados que guarden el número de cada indice data-indice
+                                  //vuelve a crear la lista
+
+                                  $("#lista").append('<div class="nombreWp"> <input data-lat="'+lugaresObjeto[i].lat+'" data-long="'+lugaresObjeto[i].long+'" type="radio" name="lugar" value="'+lugaresObjeto[i].nombre+'" required>'+lugaresObjeto[i].nombre+'-' +lugaresObjeto[i].tipo+'<a  class="delete" href="#" data-indice="'+i+'">X</a></div>');
+                              
+                                  listFlag = true;
+                               }
+
+
+
+
+
+                        });
+
+
+                        $("#no").click(function(){
+
+                             $(".popUp").css("display","none");
+
+                        });
+                     
+
+
+                    });
+
+       
+
+
+
+                 } else{
+
+                    $(".delete").css("display","none");
+
+                    flagDelte = false;
+
+                }
+
+            });
+
+
+$('#listaLugares').submit(function(){
+
+    //obtener valores seleccionados en el formulario.
+
+    var lugarSeleccionado = $('input[name=lugar]:checked', '#listaLugares');
+    var longitudLugSeleccionado =  lugarSeleccionado.attr("data-long");
+    var latitudLugSeleccionado = lugarSeleccionado.attr("data-lat");
+
+    var nombreLugarSeleccionado =  $('input[name=lugar]:checked', '#listaLugares').val();
+    console.log(nombreLugarSeleccionado);
+    console.log(latitudLugSeleccionado);
+    console.log(longitudLugSeleccionado);
+
+    var distSeleccionado =  $('input[name=distancia]:checked', '#listaLugares').val();
+    console.log(distSeleccionado);
+
+
+    // OPERAR CON ELLOS.
+
+
+    getPosicion2();
+
+    function getPosicion2() {
+        navigator.geolocation.getCurrentPosition(onSuccess2, onError);
+    }
+
+   
+    function onSuccess2(position) {
+
+      latitud = position.coords.latitude;
+      longitud = position.coords.longitude;
+        
+        console.log("lat y long actualeS:")
+        console.log(latitud);
+        console.log(longitud);
+
+      var distancia = geoUtils.distanceBetweenTwoPoints(latitudLugSeleccionado,longitudLugSeleccionado,latitud,longitud);
+      console.log(distancia);
+
+      var resultadoCorto = MathUtils.round(distancia);
+
+    
+
+      if(distSeleccionado == "millas"){
+
+          var convertidoAMil = MathUtils.kmToMi(resultadoCorto);
+          var redondearMillas = MathUtils.round(convertidoAMil);
+
+           $("#resultado").html('<h2>La distancia desde su posición actual es de: </h2> <span id="resultadoFinal">'+redondearMillas+' millas</span>');
+
+
+
+        } else{
+
+          $("#resultado").html('<h2>La distancia desde su posición actual es de: </h2> <span id="resultadoFinal">'+resultadoCorto+' km</span>');
+        }
+
+      
+
+
+    }    
+
+});
+
+</script>  
+<script type="text/javascript" src="getProjects.js"></script> 
+<script type="text/javascript" src="cordova.js"></script> 
+
+</body>
+</html>
